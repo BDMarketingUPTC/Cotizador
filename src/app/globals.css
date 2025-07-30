@@ -2,7 +2,19 @@
 
 :root {
   --background: #ffffff;
+  /* Blanco puro para el fondo principal, como se define */
   --foreground: #171717;
+  /* Negro muy oscuro para el texto principal/elementos de primer plano, como se define */
+
+  /* Colores extraídos de la imagen para la identidad de marca */
+  --brand-brown: #5F3D1F;
+  /* Un marrón oscuro, sólido y terroso, ideal para elementos de marca y fondos */
+  --brand-light-brown: #8C5B30;
+  /* Un tono de marrón un poco más claro, para acentos o degradados */
+  --brand-off-white: #F5F5F5;
+  /* Un blanco roto o crema muy claro, ideal para fondos secundarios o texto sobre fondos oscuros */
+  --brand-dark: #2C2C2C;
+  /* Un gris muy oscuro o casi negro, que complementa el foreground y el marrón */
 }
 
 @theme inline {

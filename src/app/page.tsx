@@ -1,103 +1,267 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import Layout from "./components/Layout";
+import InitialPrompt from "./components/InitialPromt";
+import DynamicFormModal from "./components/DynamicFormModal";
+import ContractDisplay from "./components/ContractDisplay";
+import PriceExplanationModal from "./components/PriceExplanationModal";
+import { generateQuestions, generateContract } from "./services/geminiService";
+import {
+  Question,
+  Answers,
+  ContractResponse,
+  ContractData,
+} from "./utils/types";
+import {
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
+
+export default function HomePage() {
+  const [initialPrompt, setInitialPrompt] = useState<string>("");
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Answers>({}); // La advertencia aquí es porque 'answers' se usa indirectamente
+  const [contractResponse, setContractResponse] =
+    useState<ContractResponse | null>(null);
+  const [parsedContractData, setParsedContractData] =
+    useState<ContractData | null>(null);
+  const [showDynamicFormModal, setShowDynamicFormModal] =
+    useState<boolean>(false);
+  const [showPriceExplanationModal, setShowPriceExplanationModal] =
+    useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
+  useEffect(() => {
+    if (contractResponse && contractResponse.contract) {
+      if (typeof contractResponse.contract === "string") {
+        try {
+          setParsedContractData(JSON.parse(contractResponse.contract));
+        } catch (e: unknown) {
+          // Cambiado de 'any' a 'unknown'
+          console.error("Error al parsear el JSON del contrato:", e);
+          // Verificar si 'e' es una instancia de Error para acceder a 'message'
+          setError(
+            e instanceof Error
+              ? `Error al procesar los datos de la cotización: ${e.message}. Por favor, inténtalo de nuevo.`
+              : "Error al procesar los datos de la cotización. Por favor, inténtalo de nuevo."
+          );
+          setParsedContractData(null);
+        }
+      } else {
+        setParsedContractData(contractResponse.contract);
+      }
+    } else {
+      setParsedContractData(null);
+    }
+  }, [contractResponse]);
+
+  const handleInitialPromptSubmit = async (prompt: string) => {
+    setInitialPrompt(prompt);
+    setIsLoading(true);
+    setError(null);
+    setCurrentStep(1);
+    try {
+      const generatedQuestions = await generateQuestions(prompt);
+      setQuestions(generatedQuestions);
+      setShowDynamicFormModal(true);
+    } catch (err: unknown) {
+      // Cambiado de 'any' a 'unknown'
+      console.error("Error al generar preguntas:", err);
+      // Verificar si 'err' es una instancia de Error para acceder a 'message'
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error al generar preguntas. Por favor, inténtalo de nuevo."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDynamicFormSubmit = async (submittedAnswers: Answers) => {
+    setAnswers(submittedAnswers); // 'answers' se usa aquí al ser pasado a generateContract
+    setShowDynamicFormModal(false);
+    setIsLoading(true);
+    setError(null);
+    setCurrentStep(2);
+    try {
+      const response = await generateContract(initialPrompt, submittedAnswers);
+      setContractResponse(response);
+    } catch (err: unknown) {
+      // Cambiado de 'any' a 'unknown'
+      console.error("Error al generar cotización:", err);
+      // Verificar si 'err' es una instancia de Error para acceder a 'message'
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error al generar la cotización. Por favor, inténtalo de nuevo."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleShowPriceExplanation = () => {
+    setShowPriceExplanationModal(true);
+  };
+
+  const handleSuggestionSubmit = (suggestion: string) => {
+    console.log("Sugerencia del usuario:", suggestion);
+    setShowPriceExplanationModal(false);
+  };
+
+  const handleResetFlow = () => {
+    setInitialPrompt("");
+    setQuestions([]);
+    setAnswers({});
+    setContractResponse(null);
+    setParsedContractData(null);
+    setError(null);
+    setCurrentStep(1);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <Layout>
+      <div className="min-h-[80vh] flex flex-col">
+        {/* Header de progreso */}
+        {!parsedContractData && (
+          <div className="w-full bg-[var(--brand-off-white)] p-4 mb-8 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    currentStep >= 1
+                      ? "bg-[var(--brand-brown)] text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  1
+                </div>
+                <span
+                  className={`text-sm ${
+                    currentStep >= 1
+                      ? "font-medium text-[var(--brand-brown)]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Describir proyecto
+                </span>
+              </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              <div className="h-px flex-1 bg-gray-300 mx-2"></div>
+
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    currentStep >= 2
+                      ? "bg-[var(--brand-brown)] text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  2
+                </div>
+                <span
+                  className={`text-sm ${
+                    currentStep >= 2
+                      ? "font-medium text-[var(--brand-brown)]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Detalles
+                </span>
+              </div>
+
+              <div className="h-px flex-1 bg-gray-300 mx-2"></div>
+
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    currentStep >= 3
+                      ? "bg-[var(--brand-brown)] text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  3
+                </div>
+                <span
+                  className={`text-sm ${
+                    currentStep >= 3
+                      ? "font-medium text-[var(--brand-brown)]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Cotización
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Contenido principal */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          {!parsedContractData ? (
+            <InitialPrompt
+              onPromptSubmit={handleInitialPromptSubmit}
+              isLoading={isLoading}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ) : (
+            <div className="w-full">
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={handleResetFlow}
+                  className="flex items-center text-[var(--brand-light-brown)] hover:text-[var(--brand-brown)] transition-colors"
+                >
+                  <ArrowPathIcon className="h-5 w-5 mr-1" />
+                  <span className="text-sm">Nueva cotización</span>
+                </button>
+              </div>
+              <ContractDisplay
+                contractData={parsedContractData}
+                onShowPriceExplanation={handleShowPriceExplanation}
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md w-full">
+              <div className="flex items-center text-red-600">
+                <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+                <h3 className="font-medium">Error</h3>
+              </div>
+              <p className="mt-2 text-sm text-red-600">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-3 text-sm text-red-600 hover:text-red-800 font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+
+      <DynamicFormModal
+        isOpen={showDynamicFormModal}
+        onClose={() => setShowDynamicFormModal(false)}
+        questions={questions}
+        onSubmit={handleDynamicFormSubmit}
+        isLoading={isLoading}
+        currentStep={1}
+        totalSteps={2}
+      />
+
+      {contractResponse && (
+        <PriceExplanationModal
+          isOpen={showPriceExplanationModal}
+          onClose={() => setShowPriceExplanationModal(false)}
+          explanationText={contractResponse.priceExplanation}
+          onSuggestionSubmit={handleSuggestionSubmit}
+          isLoading={isLoading}
+        />
+      )}
+    </Layout>
   );
 }
