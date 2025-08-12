@@ -34,6 +34,7 @@ export interface Answers {
  * Interfaz para un servicio/ítem dentro de la cotización.
  */
 export interface ServiceItem {
+  id: string;
   item: string;
   unit: string;
   quantity: number;
@@ -51,8 +52,6 @@ export interface ContractData {
   description: string;
   services: ServiceItem[];
   subtotalAmount: number;
-  ivaPercentage: number;
-  ivaAmount: number;
   totalAmount: number;
   notes: string;
 }

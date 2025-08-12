@@ -1,20 +1,19 @@
 @import "tailwindcss";
 
 :root {
+  /* Colores base que mantienes para el tema claro */
   --background: #ffffff;
-  /* Blanco puro para el fondo principal, como se define */
   --foreground: #171717;
-  /* Negro muy oscuro para el texto principal/elementos de primer plano, como se define */
 
-  /* Colores extraídos de la imagen para la identidad de marca */
-  --brand-brown: #5F3D1F;
-  /* Un marrón oscuro, sólido y terroso, ideal para elementos de marca y fondos */
+  /* Colores de marca basados en la imagen y ajustados a tu paleta */
+  --brand-brown: #331A05;
+  /* Un marrón oscuro, más cercano al color de la "K" */
   --brand-light-brown: #8C5B30;
-  /* Un tono de marrón un poco más claro, para acentos o degradados */
-  --brand-off-white: #F5F5F5;
-  /* Un blanco roto o crema muy claro, ideal para fondos secundarios o texto sobre fondos oscuros */
-  --brand-dark: #2C2C2C;
-  /* Un gris muy oscuro o casi negro, que complementa el foreground y el marrón */
+  /* Mantenemos tu marrón claro para acentos */
+  --brand-off-white: #E5E5E5;
+  /* Un gris claro para el fondo del círculo */
+  --brand-dark: #171717;
+  /* Usamos tu foreground para el texto "Tegel Konst" */
 }
 
 @theme inline {
@@ -24,7 +23,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;

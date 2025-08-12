@@ -212,10 +212,13 @@ export default function HomePage() {
               <div className="flex justify-end mb-4">
                 <button
                   onClick={handleResetFlow}
-                  className="flex items-center text-[var(--brand-light-brown)] hover:text-[var(--brand-brown)] transition-colors"
+                  className="flex items-center text-[var(--brand-off-white)] hover:text-[var(--brand-brown)] transition-colors"
                 >
                   <ArrowPathIcon className="h-5 w-5 mr-1" />
-                  <span className="text-sm">Nueva cotización</span>
+                  <span className="text-sm">
+                    {" "}
+                    <b>Nueva cotización</b>
+                  </span>
                 </button>
               </div>
               <ContractDisplay

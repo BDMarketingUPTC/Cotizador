@@ -149,6 +149,7 @@ export async function generateContract(
   - "quoteNumber": Un número de cotización (ej. "COT-2025-001").
   - "description": Una breve descripción general del trabajo.
   - "services": Un array de objetos, donde cada objeto representa un servicio/ítem:
+    - "id": Un identificador único para el servicio.
     - "item": Nombre del servicio (ej. "Mano de obra para estucado", "Materiales - Cemento").
     - "unit": Unidad (ej. "m²", "kg", "día", "global").
     - "quantity": Cantidad.
@@ -156,15 +157,12 @@ export async function generateContract(
     - "subtotal": Cantidad * Precio Unitario.
     - "reason": Una explicación persuasiva del costo y la necesidad del servicio.
   - "subtotalAmount": Suma de todos los subtotales de los servicios.
-  - "ivaPercentage": Porcentaje de IVA (ej. 19 para Colombia, si aplica, si no 0).
-  - "ivaAmount": Monto del IVA calculado.
-  - "totalAmount": Suma de subtotal + IVA.
+  - "totalAmount": Suma de todos los subtotales.
   - "notes": Un texto breve final para cualquier observación.
 
   Asegúrate de que la cotización sea persuasiva, detallando la razón de cobro de cada servicio.
 
   Devuelve la respuesta en formato JSON con dos claves principales: "contract" (que contendrá el JSON de la cotización estructurada) y "priceExplanation" (la explicación detallada del cálculo).
-
   Ejemplo de formato de salida JSON:
   {
     "contract": {
@@ -173,6 +171,7 @@ export async function generateContract(
       "description": "Remodelación de baño principal.",
       "services": [
         {
+      "id":"1",
           "item": "Mano de obra - Demolición",
           "unit": "global",
           "quantity": 1,
@@ -181,6 +180,7 @@ export async function generateContract(
           "reason": "Preparación esencial para garantizar la seguridad y el buen inicio de la obra."
         },
         {
+          "id":"2",
           "item": "Suministro e instalación de cerámica",
           "unit": "m²",
           "quantity": 15,
@@ -190,8 +190,6 @@ export async function generateContract(
         }
       ],
       "subtotalAmount": 1450000,
-      "ivaPercentage": 0,
-      "ivaAmount": 0,
       "totalAmount": 1450000,
       "notes": "Los precios pueden variar si se requieren cambios adicionales no especificados."
     },
@@ -220,6 +218,7 @@ export async function generateContract(
                 "items": {
                   "type": "OBJECT",
                   "properties": {
+                    "id": { "type": "STRING" },
                     "item": { "type": "STRING" },
                     "unit": { "type": "STRING" },
                     "quantity": { "type": "NUMBER" },
@@ -227,16 +226,14 @@ export async function generateContract(
                     "subtotal": { "type": "NUMBER" },
                     "reason": { "type": "STRING" }
                   },
-                  "required": ["item", "unit", "quantity", "unitPrice", "subtotal", "reason"]
+                  "required": ["id", "item", "unit", "quantity", "unitPrice", "subtotal", "reason"]
                 }
               },
               "subtotalAmount": { "type": "NUMBER" },
-              "ivaPercentage": { "type": "NUMBER" },
-              "ivaAmount": { "type": "NUMBER" },
               "totalAmount": { "type": "NUMBER" },
               "notes": { "type": "STRING" }
             },
-            "required": ["clientName", "quoteNumber", "description", "services", "subtotalAmount", "ivaPercentage", "ivaAmount", "totalAmount", "notes"]
+            "required": ["clientName", "quoteNumber", "description", "services", "subtotalAmount", "totalAmount", "notes"]
           },
           "priceExplanation": { "type": "STRING" }
         },

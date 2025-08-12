@@ -22,39 +22,53 @@ const InitialPrompt: React.FC<InitialPromptProps> = ({
   };
 
   return (
-    <div className="w-full bg-[var(--background)] rounded-xl shadow-lg p-8 border border-[var(--brand-off-white)]">
-      {/* Encabezado con acento de marca */}
+    <div className="relative rounded-xl bg-[var(--background)] p-8 shadow-lg transition-all duration-300 mx-4">
       <div className="mb-8 text-center">
-        <div className="w-16 h-1 bg-[var(--brand-brown)] mx-auto mb-4 rounded-full"></div>
-        <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
+        <div className="mx-auto mb-4 h-1 w-16 rounded-full bg-[var(--brand-brown)]"></div>
+        <h1 className="mb-2 text-3xl font-bold text-[var(--foreground)]">
           Generador de Contratos
         </h1>
-        <h2 className="text-xl text-[var(--brand-light-brown)] font-medium">
+        <h2 className="text-xl font-medium text-[var(--brand-light-brown)]">
           Tegel Konst
         </h2>
       </div>
+
+      {/* Overlay de carga */}
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[var(--background)]/80 backdrop-blur-md">
+          <LoadingSpinner
+            style="futuristic"
+            size="lg"
+            color="ai-gradient"
+            withText="Generando contrato..."
+            textPosition="bottom"
+            className="flex-col text-center"
+          />
+        </div>
+      )}
 
       {/* Formulario */}
       <div className="space-y-6">
         <div>
           <label
             htmlFor="project-description"
-            className="block text-sm font-medium text-[var(--brand-light-brown)] mb-2"
+            className="mb-2 block text-sm font-medium text-[var(--brand-light-brown)]"
           >
             Describe tu proyecto en detalle
           </label>
           <InputText
             id="project-description"
-            label="" // Se añade la prop label, aunque vacía para evitar duplicidad visual
+            label=""
             value={prompt}
             onChange={setPrompt}
             placeholder="Ej: Necesito construir un muro de contención de 3 metros de largo en el jardín trasero, usando ladrillo visto..."
             className="min-h-[120px]"
             multiline
+            disabled={isLoading}
           />
           <p className="mt-2 text-xs text-[var(--brand-light-brown)]">
-            Cuanto más detallado sea tu requerimiento, más precisa será nuestra
-            cotización.
+            Cuanto más detallado sea tu requerimiento, más preciso será nuestro
+            contrato.
           </p>
         </div>
 
@@ -64,38 +78,17 @@ const InitialPrompt: React.FC<InitialPromptProps> = ({
           className="w-full py-3 transition-all duration-200"
           variant="primary"
         >
-          {isLoading ? (
-            <div className="flex items-center justify-center">
-              <LoadingSpinner />
-              <span>Procesando tu solicitud...</span>
-            </div>
-          ) : (
-            <span className="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Generar Cotización Inicial
-            </span>
-          )}
+          Generar Contrato
         </Button>
       </div>
 
       {/* Pie de página informativo */}
-      <div className="mt-8 pt-6 border-t border-[var(--brand-off-white)]">
-        <div className="flex flex-col sm:flex-row justify-center gap-4 text-center sm:text-left">
+      <div className="mt-8 border-t border-[var(--brand-off-white)] pt-6">
+        <div className="flex flex-col justify-center gap-4 text-center sm:flex-row sm:text-left">
           <div className="flex items-center justify-center sm:justify-start">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-[var(--brand-brown)] mr-2"
+              className="h-5 w-5 text-[var(--brand-brown)]"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -105,14 +98,14 @@ const InitialPrompt: React.FC<InitialPromptProps> = ({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-sm text-[var(--brand-dark)]">
+            <span className="ml-2 text-sm text-[var(--brand-dark)]">
               Respuesta en menos de 1 minuto
             </span>
           </div>
           <div className="flex items-center justify-center sm:justify-start">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-[var(--brand-brown)] mr-2"
+              className="h-5 w-5 text-[var(--brand-brown)]"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -122,7 +115,7 @@ const InitialPrompt: React.FC<InitialPromptProps> = ({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-sm text-[var(--brand-dark)]">
+            <span className="ml-2 text-sm text-[var(--brand-dark)]">
               Datos protegidos y seguros
             </span>
           </div>

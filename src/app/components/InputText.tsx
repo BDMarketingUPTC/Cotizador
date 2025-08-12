@@ -1,14 +1,15 @@
-import React from "react";
+import React, { Dispatch, SetStateAction } from "react";
 
 interface InputTextProps {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: Dispatch<SetStateAction<string>>;
   placeholder?: string;
   className?: string;
   id?: string;
   multiline?: boolean;
   rows?: number;
+  disabled?: boolean; // ✨ Propiedad 'disabled' agregada
 }
 
 const InputText: React.FC<InputTextProps> = ({
@@ -20,18 +21,22 @@ const InputText: React.FC<InputTextProps> = ({
   id,
   multiline = false,
   rows = 3,
+  disabled = false, // ✨ La prop 'disabled' es recibida y tiene un valor por defecto
 }) => {
   const inputBaseClasses =
     "block w-full px-4 py-3 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 text-[var(--foreground)] bg-[var(--background)]";
-  const inputNormalClasses =
-    "border-[var(--brand-off-white)] hover:border-[var(--brand-light-brown)] focus:border-[var(--brand-brown)] focus:ring-[var(--brand-light-brown)]";
+
+  // Clases que cambian si el input está deshabilitado
+  const inputStateClasses = disabled
+    ? "border-transparent text-[var(--brand-light-brown)] cursor-not-allowed"
+    : "border-[var(--brand-off-white)] hover:border-[var(--brand-light-brown)] focus:border-[var(--brand-brown)] focus:ring-[var(--brand-light-brown)]";
 
   return (
     <div className={`w-full ${className}`}>
       {label && (
         <label
           htmlFor={id || label}
-          className="block text-sm font-medium text-[var(--brand-light-brown)] mb-2"
+          className="mb-2 block text-sm font-medium text-[var(--brand-light-brown)]"
         >
           {label}
         </label>
@@ -43,7 +48,8 @@ const InputText: React.FC<InputTextProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className={`${inputBaseClasses} ${inputNormalClasses}`}
+          disabled={disabled} // ✨ Atributo 'disabled' usado en el textarea
+          className={`${inputBaseClasses} ${inputStateClasses} resize-none`}
         />
       ) : (
         <input
@@ -52,13 +58,10 @@ const InputText: React.FC<InputTextProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`${inputBaseClasses} ${inputNormalClasses}`}
+          disabled={disabled} // ✨ Atributo 'disabled' usado en el input
+          className={`${inputBaseClasses} ${inputStateClasses}`}
         />
       )}
-      {/* Espacio reservado para mensajes de error/ayuda si se necesitan */}
-      {/* <p className="mt-1 text-xs text-[var(--brand-light-brown)]">
-        Mensaje de ayuda o error
-      </p> */}
     </div>
   );
 };
