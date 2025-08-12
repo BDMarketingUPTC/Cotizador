@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import React from "react";
 import {
   Document,
@@ -269,11 +270,12 @@ const ContractDocument: React.FC<ContractDocumentProps> = ({
           <View>
             <View style={styles.logoContainer}>
               <Image src="/logo.png" style={styles.logo} />
+
               <Text style={styles.title}>COTIZACIÓN</Text>
             </View>
             <Text style={styles.headerText}>Maestro: Rigoberto Martínez</Text>
             <Text style={styles.headerText}>Tegel Konst</Text>
-            <Text style={styles.headerText}>+57 310 123 4567</Text>
+            <Text style={styles.headerText}>316 443 74 25</Text>
           </View>
           <View style={styles.textAlignRight}>
             <Text style={styles.headerText}>

@@ -21,7 +21,7 @@ import {
 export default function HomePage() {
   const [initialPrompt, setInitialPrompt] = useState<string>("");
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Answers>({}); // La advertencia aquí es porque 'answers' se usa indirectamente
+  const [, setAnswers] = useState<Answers>({}); // La advertencia aquí es porque 'answers' se usa indirectamente
   const [contractResponse, setContractResponse] =
     useState<ContractResponse | null>(null);
   const [parsedContractData, setParsedContractData] =

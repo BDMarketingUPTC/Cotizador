@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { ContractData, ServiceItem } from "../utils/types";
 import {
   PencilIcon,
@@ -13,6 +13,7 @@ import {
 import { BlobProvider } from "@react-pdf/renderer";
 import { motion, AnimatePresence } from "framer-motion";
 import ContractDocument from "./ContractDocument";
+import Image from "next/image";
 
 interface EditableContractDisplayProps {
   contractData: ContractData;
@@ -51,15 +52,17 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<ServiceItem | null>(null);
 
+  // Estados para el nuevo modal de agregar servicio
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [newService, setNewService] = useState({
+    item: "",
+    quantity: 1,
+    unitPrice: 0,
+    reason: "",
+    subtotal: 0,
+  });
+
   const formRef = useRef<HTMLDivElement>(null);
-
-  // Nuevo estado para forzar la remonta del BlobProvider
-  const [pdfKey, setPdfKey] = useState(0);
-
-  // Forzar un nuevo render del PDF para reflejar los cambios
-  const updatePdf = useCallback(() => {
-    setPdfKey((prev) => prev + 1);
-  }, []);
 
   const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -76,8 +79,7 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
         (acc, service) => acc + service.quantity * service.unitPrice,
         0
       );
-      const newTotalAmount = newSubtotal; // Total es igual al subtotal sin IVA
-
+      const newTotalAmount = newSubtotal;
       return {
         ...editableContract,
         services,
@@ -88,8 +90,19 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
     [editableContract]
   );
 
+  useEffect(() => {
+    setNewService((prev) => ({
+      ...prev,
+      subtotal: prev.quantity * prev.unitPrice,
+    }));
+  }, [newService.quantity, newService.unitPrice]);
+
   const handleEdit = useCallback(
-    (itemId: string, field: "quantity" | "unitPrice" | "item", value: any) => {
+    (
+      itemId: string,
+      field: "quantity" | "unitPrice" | "item",
+      value: number | string
+    ) => {
       setEditing({ itemId, field });
       setEditedValue(value);
     },
@@ -131,8 +144,7 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
     setEditableContract(recalculateTotals(updatedServices));
     setEditing({ itemId: null, field: null });
     setEditedValue(undefined);
-    updatePdf(); // Forzar la actualización del PDF después de guardar
-  }, [editing, editedValue, editableContract, recalculateTotals, updatePdf]);
+  }, [editing, editedValue, editableContract, recalculateTotals]);
 
   const handleCancel = useCallback(() => {
     setEditing({ itemId: null, field: null });
@@ -140,19 +152,26 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
   }, []);
 
   const handleAddService = useCallback(() => {
-    const newService: ServiceItem = {
-      id: generateUniqueId(),
-      item: "Nuevo servicio",
-      quantity: 1,
-      unit: "unidad",
-      unitPrice: 0,
-      subtotal: 0,
-      reason: "",
-    };
+    setShowAddServiceModal(true);
+  }, []);
 
+  const handleSaveNewService = useCallback(() => {
+    const serviceToAdd: ServiceItem = {
+      ...newService,
+      id: generateUniqueId(),
+      unit: "unidad",
+    };
     setEditableContract((prev) =>
-      recalculateTotals([...prev.services, newService])
+      recalculateTotals([...prev.services, serviceToAdd])
     );
+    setShowAddServiceModal(false);
+    setNewService({
+      item: "",
+      quantity: 1,
+      unitPrice: 0,
+      reason: "",
+      subtotal: 0,
+    });
 
     setTimeout(() => {
       formRef.current?.scrollTo({
@@ -160,8 +179,18 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
         behavior: "smooth",
       });
     }, 100);
-    updatePdf(); // Forzar la actualización del PDF después de agregar
-  }, [recalculateTotals, updatePdf]);
+  }, [newService, recalculateTotals]);
+
+  const handleCancelAddService = useCallback(() => {
+    setShowAddServiceModal(false);
+    setNewService({
+      item: "",
+      quantity: 1,
+      unitPrice: 0,
+      reason: "",
+      subtotal: 0,
+    });
+  }, []);
 
   const handleDeleteClick = useCallback((service: ServiceItem) => {
     setItemToDelete(service);
@@ -192,9 +221,7 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
     setEditableContract(recalculateTotals(updatedServices));
     setShowDeleteModal(false);
     setItemToDelete(null);
-
-    updatePdf(); // Forzar la actualización del PDF después de eliminar
-  }, [itemToDelete, editableContract, recalculateTotals, updatePdf]);
+  }, [itemToDelete, editableContract, recalculateTotals]);
 
   const handleCancelDelete = useCallback(() => {
     setShowDeleteModal(false);
@@ -212,8 +239,7 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
       description: editedDescription,
     }));
     setIsEditingDescription(false);
-    updatePdf(); // Forzar la actualización del PDF después de guardar
-  }, [editedDescription, updatePdf]);
+  }, [editedDescription]);
 
   const handleCancelGeneralDescription = useCallback(() => {
     setIsEditingDescription(false);
@@ -223,7 +249,6 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
   // Datos estáticos para el display
   const maestroAlbañil = "Rigoberto Martínez";
   const empresaNombre = "Tegel Konst";
-  const empresaContacto = "316 443 74 25";
   const fechaEmision = new Date().toLocaleDateString("es-CO", {
     year: "numeric",
     month: "long",
@@ -251,17 +276,14 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
             Explicación de Precios
           </motion.button>
           <BlobProvider
-            // Esta es la corrección clave para forzar la remonta del componente
-            key={`pdf-${pdfKey}`}
             document={<ContractDocument contractData={editableContract} />}
           >
-            {({ url, loading, error }) => (
+            {({ url, loading }) => (
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 href={url || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
+                download="CotizacionServicios.pdf"
                 className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg shadow transition ${
                   loading
                     ? "bg-gray-400 cursor-not-allowed"
@@ -286,7 +308,7 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
         <div className="bg-gray-800 text-white p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-4">
-              <img
+              <Image
                 src="/logo.png"
                 alt="Logo de la Empresa"
                 className="w-14 h-14 object-contain"
@@ -842,6 +864,132 @@ const EditableContractDisplay: React.FC<EditableContractDisplayProps> = ({
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                 >
                   Eliminar
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Nuevo Modal para Añadir Servicio */}
+      <AnimatePresence>
+        {showAddServiceModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="p-6 bg-white rounded-lg shadow-xl max-w-lg w-full mx-4"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Agregar Nuevo Servicio
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="service-name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Servicio
+                  </label>
+                  <input
+                    type="text"
+                    id="service-name"
+                    value={newService.item}
+                    onChange={(e) =>
+                      setNewService({ ...newService, item: e.target.value })
+                    }
+                    className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="service-quantity"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Cantidad
+                    </label>
+                    <input
+                      type="number"
+                      id="service-quantity"
+                      min="1"
+                      step="1"
+                      value={newService.quantity}
+                      onChange={(e) =>
+                        setNewService({
+                          ...newService,
+                          quantity: parseFloat(e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label
+                      htmlFor="service-unit-price"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Valor Unitario
+                    </label>
+                    <input
+                      type="number"
+                      id="service-unit-price"
+                      min="0"
+                      step="1000"
+                      value={newService.unitPrice}
+                      onChange={(e) =>
+                        setNewService({
+                          ...newService,
+                          unitPrice: parseFloat(e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="service-description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Descripción (opcional)
+                  </label>
+                  <textarea
+                    id="service-description"
+                    value={newService.reason}
+                    onChange={(e) =>
+                      setNewService({ ...newService, reason: e.target.value })
+                    }
+                    rows={3}
+                    className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
+                  />
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="font-semibold text-gray-700">Subtotal:</span>
+                  <span className="font-bold text-lg text-blue-800">
+                    {formatCurrency(newService.subtotal)}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleCancelAddService}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSaveNewService}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <PlusIcon className="w-4 h-4" />
+                    <span>Agregar</span>
+                  </div>
                 </motion.button>
               </div>
             </motion.div>

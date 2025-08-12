@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Question, Answers, QuestionType } from "../utils/types"; // Asegúrate de que QuestionType esté exportado si lo usas
+import { Question, Answers } from "../utils/types"; // Asegúrate de que QuestionType esté exportado si lo usas
 import InputText from "./InputText";
 import SelectYesNo from "./SelectYesNo";
 import StepCounter from "./StepCounter";
@@ -112,7 +112,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   <InputText
                     label={q.label}
                     value={(answers[q.id] as string) || ""} // Casteo explícito a string
-                    onChange={(val) => handleAnswerChange(q.id, val)}
+                    onChange={(val) => handleAnswerChange(q.id, val as string)}
                     placeholder={q.placeholder}
                   />
                 )}
